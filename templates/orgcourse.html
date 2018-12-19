@@ -1,0 +1,42 @@
+{% extends 'org_base.html' %}
+
+<title>{% block title %}{{ courseorg.name }}{% endblock %}</title>
+
+{% block page_path %}机构课程{% endblock %}
+{% block right_form %}
+
+<div class="right companycenter layout grouping">
+		<div class="head">
+			<h1>全部课程</h1>
+			<a class="green fr more" href="{% url 'course:course_list' 1 %}">查看更多  >  </a>
+		</div>
+		<div class="brief group_list">
+                {% if course %}
+                {% for c in course %}
+                <div class="module1_5 box">
+                    <a href="{% url 'course:coursed_etail' c.id %}"><img width="214" src="{{ MEDIA_URL}}{{ c.image}}"/></a>
+                    <div class="des">
+                        <a href="{% url 'course:coursed_etail' c.id %}"><h2>{{ c.name }}</h2></a>
+                        <span class="fl">课时：<i class="key">{{ c.learn_time }}</i></span>
+                        <span class="fr">参加人数：{{ c.students }}</span>
+                    </div>
+                    <div class="bottom">
+                        <span class="fl">慕课网</span>
+                         <span class="star fr  notlogin
+                            " data-favid="13"  data-fav-type="4">
+                                {{ c.fav_nums }}
+                        </span>
+                    </div>
+                </div>
+
+                    {% endfor %}
+                    {% else %}
+                         <div class="module1_5 box">
+                    <a href=""><img width="214" src="/media/course/2018/12/50afdfb804924bfea713115958081215.jpeg"/></a>
+                    <p>暂无课程,可联系培训机构</p>
+                        {% endif %}
+
+		</div>
+
+	</div>
+{% endblock %}

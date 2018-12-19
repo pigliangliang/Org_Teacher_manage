@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block custom_bread %}全部课程{%  endblock%}
+{% block middle_box %}
+     {% for c in course %}
+     <div class="box">
+
+                                <a href="{% url 'course:coursed_etail' c.id %}">
+                                    <img width="280" height="350" class="scrollLoading" src="{{ MEDIA_URL }}{{ c.image }}"/>
+                                </a>
+                                <div class="des">
+                                    <a href="{% url 'course:coursed_etail' c.id %}">
+                                        <h2>{{  c.name}}</h2>
+                                    </a>
+                                    <span class="fl">时长：<i class="key">{{ c.learn_time }}</i></span>
+                                    <span class="fr">学习人数：{{ c.students }}&nbsp;&nbsp;</span>
+                                </div>
+                                <div class="bottom">
+                                    <a href="{% url 'course:coursed_etail' c.id %}"><span class="fl">来自慕课网</span></a>
+                                    <span class="star fr  notlogin
+                                        " data-favid="15">
+                                        1
+                                    </span>
+                                </div>
+
+                            </div>
+     {% endfor %}
+ {% endblock %}
+
+{% block right_box %}
+    <div class="group_recommend">
+
+                    {% for hot in hot_course %}
+
+                    <dl>
+						<dt>
+							<a target="_blank" href="">
+								<img width="240" height="220" class="scrollLoading" src="{{ MEDIA_URL }}{{ hot.image }}"/>
+							</a>
+						</dt>
+						<dd>
+							<a target="_blank" href=""><h2> {{ hot.name }}</h2></a>
+							<span class="fl">难度：<i class="key">{{ hot.degree }}</i></span>
+						</dd>
+					</dl>
+                    {% endfor %}
+{% endblock %}

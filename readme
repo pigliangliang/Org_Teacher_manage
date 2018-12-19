@@ -1,0 +1,149 @@
+django通用视图方法重写
+ListView中的针对后去某个模型中具体ID的数据
+#url.py
+  #re_path('orghome/(\d+)/',OrgHomeView.as_view(),name='orghome'),
+  #path('orghome/<str:id>/', OrgHomeDetail.as_view(), name='orghome'),
+
+class OrgHomeView(ListView):
+
+    template_name = 'org-detail-homepage.html'
+    context_object_name = 'courseorg'
+
+    def get_queryset(self):
+        return CourseOrg.objects.get(id=self.args[0])
+
+
+    def get_context_data(self, **kwargs):
+        kwargs['course'] = CourseOrg.objects.get(id=self.args[0]).course_set.all()[:4]#反向查询
+        kwargs['teacher'] = Course.objects.filter(course_org=self.args[0])[:4]#正向查询
+        return super(OrgHomeView,self).get_context_data(**kwargs)
+
+DetailView中针对上述url中的具体ID的重写方法。
+
+class OrgHomeDetail(DetailView):
+    template_name = 'org-detail-homepage.html'
+    context_object_name = 'courseorg'
+    pk_url_kwarg = 'id'#引号中名称需要和url中的一致
+    model = CourseOrg
+
+
+    #def get_object(self, queryset=None):#类似ListView中的get_queryset()方法
+    #   return super(OrgHomeDetail,self).get_object()
+
+    def get_context_data(self, **kwargs):#这里必须使用反正查询方式了，因为后的对象是已经是具体ID的数据了。
+        kwargs['course'] = self.object.course_set.all()[:4]#反向查询
+        kwargs['teacher'] = self.object.teacher_set.all()
+        return super(OrgHomeDetail,self).get_context_data(**kwargs)
+
+对比发现，如果是获取model中具体ID的数据，是的DetailView方便。
+如果使用listview需要重写get_queryset（）方法。
+而DetailView则直接根据url中提交的id后去具体id的数据，无需重写。
+
+
+
+#两种方式的url，对应到view中的参数是不一样的。正则方式在view中需要通过参数的方式
+    #获取，有两种方式
+    #一：函数形式参数传递：
+    #def get（request,id）
+    #二：通过arg获取 arg【0】
+    #url中定义了参数id，view中必须对应到，具体参考代码示例。
+    #re_path('orghome/(\d+)/',OrgHomeView.as_view(),name='orghome'),
+    path('orghome/<str:id>/', OrgHomeDetail.as_view(), name='orghome'),
+
+    re_path('orgcourse/(\d+)/',OrgCourseView.as_view(),name='orgcourse'),
+    path('orgdetail/<int:pk>/',OrgDetailView.as_view(),name='orgdetail'),
+    path('orgteacher/<int:id>/',OrgTeacherView.as_view(),name='orgteacher')
+
+class OrgCourseView(ListView):
+    model =  CourseOrg
+    template_name = 'orgcourse.html'
+    context_object_name = 'course'
+    current_page= 'course'
+
+    def get_queryset(self):
+        return CourseOrg.objects.get(id=self.args[0]).course_set.all()#课程queryset
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        kwargs['courseorg']=CourseOrg.objects.get(id=self.args[0])
+        kwargs['current_page']=self.current_page
+        return super(OrgCourseView,self).get_context_data(**kwargs)
+
+
+class OrgDetailView(DetailView):
+    template_name = 'orgdetail.html'
+    model = CourseOrg
+    context_object_name = 'courseorg'
+    current_page='desc'
+    pk_url_kwarg = 'pk'
+
+    """
+    使用detailView无需重写该方法，Detailview已经根据pk_url_kwarg
+    中获取的参数实现获取具体pk的queryset。
+    """
+    # def get_object(self, queryset=None):
+    #     return CourseOrg.objects.get()
+
+    def get_context_data(self, **kwargs):
+        kwargs['current_page']=self.current_page
+        return super(OrgDetailView,self).get_context_data(**kwargs)
+
+class OrgTeacherView(DetailView):
+    template_name = 'orgteacher.html'
+    model = CourseOrg
+    context_object_name = 'courseorg'
+    current_page= 'teacher'
+
+    pk_url_kwarg = 'id'
+
+    #self.object 已经是通过id过滤的机构
+    def get_context_data(self, **kwargs):
+        kwargs['teacher'] = self.object.teacher_set.all()
+        kwargs['current_page'] =self.current_page
+        return super(OrgTeacherView,self).get_context_data(**kwargs)
+
+
+
+django中间件最多五中方法
+
+
+from django.utils.deprecation import MiddlewareMixin
+from  django.urls import reverse
+from django.http import HttpResponseRedirect,HttpResponse
+
+class  UserAuthMiddle(MiddlewareMixin):
+
+    def process_request(self,request):#方法一
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(reverse('user:login'))
+        else:
+            return HttpResponseRedirect(reverse('index'))
+
+    def process_response():
+    ...
+    def Process_view():
+    ...
+    def process_exception()
+    ...
+
+    def process_template_render()
+    ...
+
+
+
+
+django csrf 中间件
+    django 使用process_view()方法实现，原因是在django中默认是全局的csrf，在一些不需要csrf中的视图部分
+    需要排除。
+    csrf通过请求体中的token字符串进行验证。
+
+    基于类的视图如果需要csrf免除验证的，
+    1、必须引入from django.utils.decorators import method_decorator
+    2、CBV基于反射机制实现的，请求到达view后 调用父类的dispatch中。该装饰器需要加载dispatch上
+    3、需要重写dispatch方法
+
+
+    class FOO():
+      @method_decorate(csrf_except)
+      def dispatch(self,request,*args,**kwargs):
+          return super().dispatch(request,*args,**kwarg)
+
